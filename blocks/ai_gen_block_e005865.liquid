@@ -1,0 +1,1066 @@
+{% doc %}
+  @prompt
+    Create a video review section featuring 5-6 embedded video reviews (supporting both Instagram Reels and YouTube Shorts). The section should be fully mobile responsive with a clean card-based layout. Each video card should include the video embed (vertical/portrait format to suit Reels and Shorts), reviewer name, star rating, and a short review text. The design should match the overall website theme using the store's existing colors, fonts, and styling. Include smooth scrolling or a carousel layout for mobile users. Videos should be embeddable via URL input in the theme editor settings., can u make this playable here only they dont need to change platfrom to view the video and also add collection option so what i can add product thats in video so they can select on video and they can buy product there , can u make that its playing automatic no need to press play button . but they click on them take them to video opened and product listed at side , ok forgot about youtube shorts and reel make it like way so ican upload the video , ok make it youtube and reel linked the video upload is not working but make the video box small and make thta atleasr 5 video bloack will be there
+{% enddoc %}
+{% assign ai_gen_id = block.id | replace: '_', '' | downcase %}
+
+{% style %}
+  .ai-video-reviews-{{ ai_gen_id }} {
+    display: block;
+    width: 100%;
+    padding: 40px 20px;
+    background-color: {{ block.settings.background_color }};
+  }
+
+  .ai-video-reviews__container-{{ ai_gen_id }} {
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  .ai-video-reviews__header-{{ ai_gen_id }} {
+    text-align: center;
+    margin-bottom: 40px;
+  }
+
+  .ai-video-reviews__title-{{ ai_gen_id }} {
+    font-size: {{ block.settings.title_size }}px;
+    color: {{ block.settings.text_color }};
+    margin: 0 0 12px;
+    font-family: {{ block.settings.title_font.family }}, {{ block.settings.title_font.fallback_families }};
+    font-weight: {{ block.settings.title_font.weight }};
+    font-style: {{ block.settings.title_font.style }};
+  }
+
+  .ai-video-reviews__subtitle-{{ ai_gen_id }} {
+    font-size: {{ block.settings.subtitle_size }}px;
+    color: {{ block.settings.text_color }};
+    opacity: 0.8;
+    margin: 0;
+  }
+
+  .ai-video-reviews__grid-{{ ai_gen_id }} {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: {{ block.settings.card_spacing }}px;
+    margin-bottom: 20px;
+  }
+
+  .ai-video-reviews__card-{{ ai_gen_id }} {
+    background-color: {{ block.settings.card_background }};
+    border-radius: {{ block.settings.card_border_radius }}px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    cursor: pointer;
+  }
+
+  .ai-video-reviews__card-{{ ai_gen_id }}:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  }
+
+  .ai-video-reviews__video-wrapper-{{ ai_gen_id }} {
+    position: relative;
+    width: 100%;
+    padding-bottom: 177.78%;
+    background-color: #000000;
+    overflow: hidden;
+  }
+
+  .ai-video-reviews__video-{{ ai_gen_id }} {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+  }
+
+  .ai-video-reviews__play-overlay-{{ ai_gen_id }} {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(0, 0, 0, 0.3);
+    transition: background-color 0.3s ease;
+    pointer-events: none;
+  }
+
+  .ai-video-reviews__card-{{ ai_gen_id }}:hover .ai-video-reviews__play-overlay-{{ ai_gen_id }} {
+    background-color: rgba(0, 0, 0, 0.5);
+  }
+
+  .ai-video-reviews__play-icon-{{ ai_gen_id }} {
+    width: 50px;
+    height: 50px;
+    background-color: rgba(255, 255, 255, 0.9);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.3s ease;
+  }
+
+  .ai-video-reviews__card-{{ ai_gen_id }}:hover .ai-video-reviews__play-icon-{{ ai_gen_id }} {
+    transform: scale(1.1);
+  }
+
+  .ai-video-reviews__play-icon-{{ ai_gen_id }} svg {
+    width: 24px;
+    height: 24px;
+    fill: {{ block.settings.text_color }};
+    margin-left: 3px;
+  }
+
+  .ai-video-reviews__video-placeholder-{{ ai_gen_id }} {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #f4f4f4;
+    color: #999;
+    font-size: 12px;
+    text-align: center;
+    padding: 15px;
+  }
+
+  .ai-video-reviews__content-{{ ai_gen_id }} {
+    padding: 16px;
+  }
+
+  .ai-video-reviews__rating-{{ ai_gen_id }} {
+    display: flex;
+    gap: 3px;
+    margin-bottom: 10px;
+  }
+
+  .ai-video-reviews__star-{{ ai_gen_id }} {
+    width: 14px;
+    height: 14px;
+    fill: {{ block.settings.star_color }};
+  }
+
+  .ai-video-reviews__star-{{ ai_gen_id }}--empty {
+    fill: #e0e0e0;
+  }
+
+  .ai-video-reviews__reviewer-{{ ai_gen_id }} {
+    font-size: 14px;
+    font-weight: 600;
+    color: {{ block.settings.text_color }};
+    margin: 0 0 6px;
+  }
+
+  .ai-video-reviews__text-{{ ai_gen_id }} {
+    font-size: 13px;
+    line-height: 1.4;
+    color: {{ block.settings.text_color }};
+    opacity: 0.85;
+    margin: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .ai-video-reviews__modal-{{ ai_gen_id }} {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.9);
+    z-index: 9999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .ai-video-reviews__modal-{{ ai_gen_id }}.active {
+    display: flex;
+  }
+
+  .ai-video-reviews__modal-content-{{ ai_gen_id }} {
+    display: flex;
+    gap: 30px;
+    max-width: 1200px;
+    width: 100%;
+    max-height: 90vh;
+    background-color: {{ block.settings.card_background }};
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .ai-video-reviews__modal-video-section-{{ ai_gen_id }} {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background-color: #000000;
+    position: relative;
+  }
+
+  .ai-video-reviews__modal-video-wrapper-{{ ai_gen_id }} {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    min-height: 400px;
+  }
+
+  .ai-video-reviews__modal-video-{{ ai_gen_id }} {
+    width: 100%;
+    height: 100%;
+    border: none;
+  }
+
+  .ai-video-reviews__modal-info-{{ ai_gen_id }} {
+    padding: 24px;
+    background-color: {{ block.settings.card_background }};
+  }
+
+  .ai-video-reviews__modal-rating-{{ ai_gen_id }} {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 12px;
+  }
+
+  .ai-video-reviews__modal-star-{{ ai_gen_id }} {
+    width: 20px;
+    height: 20px;
+    fill: {{ block.settings.star_color }};
+  }
+
+  .ai-video-reviews__modal-star-{{ ai_gen_id }}--empty {
+    fill: #e0e0e0;
+  }
+
+  .ai-video-reviews__modal-reviewer-{{ ai_gen_id }} {
+    font-size: 20px;
+    font-weight: 600;
+    color: {{ block.settings.text_color }};
+    margin: 0 0 12px;
+  }
+
+  .ai-video-reviews__modal-text-{{ ai_gen_id }} {
+    font-size: 15px;
+    line-height: 1.6;
+    color: {{ block.settings.text_color }};
+    opacity: 0.85;
+    margin: 0;
+  }
+
+  .ai-video-reviews__modal-sidebar-{{ ai_gen_id }} {
+    width: 350px;
+    background-color: {{ block.settings.card_background }};
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .ai-video-reviews__modal-sidebar-header-{{ ai_gen_id }} {
+    padding: 24px 24px 16px;
+    border-bottom: 1px solid {{ block.settings.text_color | color_modify: 'alpha', 0.1 }};
+  }
+
+  .ai-video-reviews__modal-sidebar-title-{{ ai_gen_id }} {
+    font-size: 18px;
+    font-weight: 600;
+    color: {{ block.settings.text_color }};
+    margin: 0;
+  }
+
+  .ai-video-reviews__modal-products-{{ ai_gen_id }} {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+  }
+
+  .ai-video-reviews__modal-product-{{ ai_gen_id }} {
+    display: flex;
+    gap: 12px;
+    padding: 12px;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: background-color 0.3s ease;
+    margin-bottom: 12px;
+  }
+
+  .ai-video-reviews__modal-product-{{ ai_gen_id }}:hover {
+    background-color: {{ block.settings.text_color | color_modify: 'alpha', 0.05 }};
+  }
+
+  .ai-video-reviews__modal-product-image-{{ ai_gen_id }} {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 6px;
+    flex-shrink: 0;
+  }
+
+  .ai-video-reviews__modal-product-info-{{ ai_gen_id }} {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .ai-video-reviews__modal-product-title-{{ ai_gen_id }} {
+    font-size: 15px;
+    font-weight: 600;
+    color: {{ block.settings.text_color }};
+    margin: 0 0 8px;
+    line-height: 1.3;
+  }
+
+  .ai-video-reviews__modal-product-price-{{ ai_gen_id }} {
+    font-size: 16px;
+    font-weight: 600;
+    color: {{ block.settings.star_color }};
+    margin: 0 0 8px;
+  }
+
+  .ai-video-reviews__modal-product-button-{{ ai_gen_id }} {
+    display: inline-block;
+    padding: 8px 16px;
+    background-color: {{ block.settings.text_color }};
+    color: {{ block.settings.card_background }};
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 600;
+    text-align: center;
+    transition: opacity 0.3s ease;
+  }
+
+  .ai-video-reviews__modal-product-button-{{ ai_gen_id }}:hover {
+    opacity: 0.85;
+  }
+
+  .ai-video-reviews__modal-empty-{{ ai_gen_id }} {
+    text-align: center;
+    padding: 40px 20px;
+    color: {{ block.settings.text_color }};
+    opacity: 0.5;
+    font-size: 14px;
+  }
+
+  .ai-video-reviews__close-button-{{ ai_gen_id }} {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 40px;
+    height: 40px;
+    background-color: rgba(255, 255, 255, 0.9);
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    transition: background-color 0.3s ease;
+  }
+
+  .ai-video-reviews__close-button-{{ ai_gen_id }}:hover {
+    background-color: rgba(255, 255, 255, 1);
+  }
+
+  .ai-video-reviews__close-icon-{{ ai_gen_id }} {
+    width: 20px;
+    height: 20px;
+    stroke: {{ block.settings.text_color }};
+  }
+
+  @media screen and (max-width: 749px) {
+    .ai-video-reviews-{{ ai_gen_id }} {
+      padding: 30px 16px;
+    }
+
+    .ai-video-reviews__header-{{ ai_gen_id }} {
+      margin-bottom: 24px;
+    }
+
+    .ai-video-reviews__title-{{ ai_gen_id }} {
+      font-size: {{ block.settings.title_size | times: 0.8 }}px;
+    }
+
+    .ai-video-reviews__subtitle-{{ ai_gen_id }} {
+      font-size: {{ block.settings.subtitle_size | times: 0.9 }}px;
+    }
+
+    .ai-video-reviews__grid-{{ ai_gen_id }} {
+      grid-template-columns: repeat(2, 1fr);
+      gap: {{ block.settings.card_spacing | times: 0.75 }}px;
+    }
+
+    .ai-video-reviews__content-{{ ai_gen_id }} {
+      padding: 12px;
+    }
+
+    .ai-video-reviews__modal-content-{{ ai_gen_id }} {
+      flex-direction: column;
+      max-height: 95vh;
+    }
+
+    .ai-video-reviews__modal-sidebar-{{ ai_gen_id }} {
+      width: 100%;
+      max-height: 40vh;
+    }
+
+    .ai-video-reviews__modal-video-section-{{ ai_gen_id }} {
+      min-height: 50vh;
+    }
+  }
+
+  @media screen and (min-width: 750px) and (max-width: 989px) {
+    .ai-video-reviews__grid-{{ ai_gen_id }} {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  @media screen and (min-width: 990px) {
+    .ai-video-reviews__grid-{{ ai_gen_id }} {
+      grid-template-columns: repeat({{ block.settings.desktop_columns }}, 1fr);
+    }
+  }
+{% endstyle %}
+
+<video-reviews-{{ ai_gen_id }} class="ai-video-reviews-{{ ai_gen_id }}" {{ block.shopify_attributes }}>
+  <div class="ai-video-reviews__container-{{ ai_gen_id }}">
+    {% if block.settings.title != blank or block.settings.subtitle != blank %}
+      <div class="ai-video-reviews__header-{{ ai_gen_id }}">
+        {% if block.settings.title != blank %}
+          <h2 class="ai-video-reviews__title-{{ ai_gen_id }}">{{ block.settings.title }}</h2>
+        {% endif %}
+        {% if block.settings.subtitle != blank %}
+          <p class="ai-video-reviews__subtitle-{{ ai_gen_id }}">{{ block.settings.subtitle }}</p>
+        {% endif %}
+      </div>
+    {% endif %}
+
+    <div class="ai-video-reviews__grid-{{ ai_gen_id }}">
+      {% for i in (1..6) %}
+        {% liquid
+          assign video_url_key = 'video_url_' | append: i
+          assign reviewer_name_key = 'reviewer_name_' | append: i
+          assign rating_key = 'rating_' | append: i
+          assign review_text_key = 'review_text_' | append: i
+          assign products_key = 'products_' | append: i
+
+          assign video_url = block.settings[video_url_key]
+          assign reviewer_name = block.settings[reviewer_name_key]
+          assign rating = block.settings[rating_key]
+          assign review_text = block.settings[review_text_key]
+          assign products = block.settings[products_key]
+        %}
+
+        {% if video_url != blank or reviewer_name != blank %}
+          <div class="ai-video-reviews__card-{{ ai_gen_id }}" data-card-index="{{ i }}">
+            <div class="ai-video-reviews__video-wrapper-{{ ai_gen_id }}">
+              {% if video_url != blank %}
+                <iframe
+                  class="ai-video-reviews__video-{{ ai_gen_id }}"
+                  src="{{ video_url }}"
+                  frameborder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowfullscreen
+                  loading="lazy"
+                ></iframe>
+                <div class="ai-video-reviews__play-overlay-{{ ai_gen_id }}">
+                  <div class="ai-video-reviews__play-icon-{{ ai_gen_id }}">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M8 5v14l11-7z"/>
+                    </svg>
+                  </div>
+                </div>
+              {% else %}
+                <div class="ai-video-reviews__video-placeholder-{{ ai_gen_id }}">
+                  Add video URL
+                </div>
+              {% endif %}
+            </div>
+
+            <div class="ai-video-reviews__content-{{ ai_gen_id }}">
+              <div class="ai-video-reviews__rating-{{ ai_gen_id }}">
+                {% for star in (1..5) %}
+                  {% if star <= rating %}
+                    <svg class="ai-video-reviews__star-{{ ai_gen_id }}" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                    </svg>
+                  {% else %}
+                    <svg class="ai-video-reviews__star-{{ ai_gen_id }} ai-video-reviews__star-{{ ai_gen_id }}--empty" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                    </svg>
+                  {% endif %}
+                {% endfor %}
+              </div>
+
+              {% if reviewer_name != blank %}
+                <h3 class="ai-video-reviews__reviewer-{{ ai_gen_id }}">{{ reviewer_name }}</h3>
+              {% endif %}
+
+              {% if review_text != blank %}
+                <p class="ai-video-reviews__text-{{ ai_gen_id }}">{{ review_text }}</p>
+              {% endif %}
+            </div>
+          </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="ai-video-reviews__modal-{{ ai_gen_id }}" data-modal>
+    <div class="ai-video-reviews__modal-content-{{ ai_gen_id }}">
+      <div class="ai-video-reviews__modal-video-section-{{ ai_gen_id }}">
+        <button class="ai-video-reviews__close-button-{{ ai_gen_id }}" data-close-modal aria-label="Close">
+          <svg class="ai-video-reviews__close-icon-{{ ai_gen_id }}" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M18 6L6 18M6 6l12 12" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <div class="ai-video-reviews__modal-video-wrapper-{{ ai_gen_id }}">
+          <iframe
+            class="ai-video-reviews__modal-video-{{ ai_gen_id }}"
+            data-modal-video
+            frameborder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen
+          ></iframe>
+        </div>
+        <div class="ai-video-reviews__modal-info-{{ ai_gen_id }}" data-modal-info>
+          <div class="ai-video-reviews__modal-rating-{{ ai_gen_id }}" data-modal-rating></div>
+          <h3 class="ai-video-reviews__modal-reviewer-{{ ai_gen_id }}" data-modal-reviewer></h3>
+          <p class="ai-video-reviews__modal-text-{{ ai_gen_id }}" data-modal-text></p>
+        </div>
+      </div>
+
+      <div class="ai-video-reviews__modal-sidebar-{{ ai_gen_id }}">
+        <div class="ai-video-reviews__modal-sidebar-header-{{ ai_gen_id }}">
+          <h4 class="ai-video-reviews__modal-sidebar-title-{{ ai_gen_id }}">Products in this video</h4>
+        </div>
+        <div class="ai-video-reviews__modal-products-{{ ai_gen_id }}" data-modal-products></div>
+      </div>
+    </div>
+  </div>
+
+  <template data-product-template>
+    <a href="" class="ai-video-reviews__modal-product-{{ ai_gen_id }}" data-product-link>
+      <img src="" alt="" class="ai-video-reviews__modal-product-image-{{ ai_gen_id }}" data-product-image width="80" height="80" loading="lazy">
+      <div class="ai-video-reviews__modal-product-info-{{ ai_gen_id }}">
+        <h5 class="ai-video-reviews__modal-product-title-{{ ai_gen_id }}" data-product-title></h5>
+        <p class="ai-video-reviews__modal-product-price-{{ ai_gen_id }}" data-product-price></p>
+        <span class="ai-video-reviews__modal-product-button-{{ ai_gen_id }}">View product</span>
+      </div>
+    </a>
+  </template>
+
+  {% for i in (1..6) %}
+    {% liquid
+      assign video_url_key = 'video_url_' | append: i
+      assign reviewer_name_key = 'reviewer_name_' | append: i
+      assign rating_key = 'rating_' | append: i
+      assign review_text_key = 'review_text_' | append: i
+      assign products_key = 'products_' | append: i
+
+      assign video_url = block.settings[video_url_key]
+      assign reviewer_name = block.settings[reviewer_name_key]
+      assign rating = block.settings[rating_key]
+      assign review_text = block.settings[review_text_key]
+      assign products = block.settings[products_key]
+    %}
+
+    <script type="application/json" data-review-data="{{ i }}">
+      {
+        "videoUrl": {{ video_url | json }},
+        "reviewerName": {{ reviewer_name | json }},
+        "rating": {{ rating | json }},
+        "reviewText": {{ review_text | json }},
+        "products": [
+          {% for product in products %}
+            {
+              "url": {{ product.url | json }},
+              "title": {{ product.title | json }},
+              "price": {{ product.price | money | json }},
+              "imageUrl": {{ product.featured_image | image_url: width: 160 | json }},
+              "imageAlt": {{ product.featured_image.alt | escape | json }}
+            }{% unless forloop.last %},{% endunless %}
+          {% endfor %}
+        ]
+      }
+    </script>
+  {% endfor %}
+</video-reviews-{{ ai_gen_id }}>
+
+<script>
+  (function() {
+    class VideoReviews{{ ai_gen_id }} extends HTMLElement {
+      constructor() {
+        super();
+        this.reviewData = {};
+      }
+
+      connectedCallback() {
+        this.loadReviewData();
+        this.setupCardClicks();
+        this.setupModal();
+      }
+
+      loadReviewData() {
+        const dataScripts = this.querySelectorAll('[data-review-data]');
+        dataScripts.forEach((script) => {
+          const index = script.getAttribute('data-review-data');
+          try {
+            this.reviewData[index] = JSON.parse(script.textContent);
+          } catch (e) {
+            console.error('Error parsing review data:', e);
+          }
+        });
+      }
+
+      setupCardClicks() {
+        const cards = this.querySelectorAll('.ai-video-reviews__card-{{ ai_gen_id }}');
+        
+        cards.forEach((card) => {
+          card.addEventListener('click', () => {
+            const index = card.getAttribute('data-card-index');
+            this.openModal(index);
+          });
+        });
+      }
+
+      setupModal() {
+        const modal = this.querySelector('[data-modal]');
+        const closeButton = this.querySelector('[data-close-modal]');
+
+        closeButton.addEventListener('click', () => {
+          this.closeModal();
+        });
+
+        modal.addEventListener('click', (e) => {
+          if (e.target === modal) {
+            this.closeModal();
+          }
+        });
+
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape' && modal.classList.contains('active')) {
+            this.closeModal();
+          }
+        });
+      }
+
+      getEmbedUrl(url) {
+        if (!url) return null;
+
+        if (url.includes('youtube.com') || url.includes('youtu.be')) {
+          let videoId = '';
+          if (url.includes('shorts/')) {
+            videoId = url.split('shorts/')[1].split('?')[0];
+          } else if (url.includes('youtu.be/')) {
+            videoId = url.split('youtu.be/')[1].split('?')[0];
+          } else if (url.includes('watch?v=')) {
+            videoId = url.split('watch?v=')[1].split('&')[0];
+          }
+          return `https://www.youtube.com/embed/${videoId}?autoplay=1`;
+        }
+
+        if (url.includes('instagram.com')) {
+          return url.replace('/reel/', '/p/') + 'embed';
+        }
+
+        return url;
+      }
+
+      openModal(index) {
+        const data = this.reviewData[index];
+        if (!data || !data.videoUrl) return;
+
+        const modal = this.querySelector('[data-modal]');
+        const modalVideo = this.querySelector('[data-modal-video]');
+        const modalReviewer = this.querySelector('[data-modal-reviewer]');
+        const modalText = this.querySelector('[data-modal-text]');
+        const modalRating = this.querySelector('[data-modal-rating]');
+        const modalProducts = this.querySelector('[data-modal-products]');
+
+        const embedUrl = this.getEmbedUrl(data.videoUrl);
+        modalVideo.src = embedUrl;
+
+        modalReviewer.textContent = data.reviewerName || '';
+        modalText.textContent = data.reviewText || '';
+
+        modalRating.innerHTML = '';
+        for (let i = 1; i <= 5; i++) {
+          const star = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+          star.setAttribute('class', 'ai-video-reviews__modal-star-{{ ai_gen_id }}' + (i > data.rating ? ' ai-video-reviews__modal-star-{{ ai_gen_id }}--empty' : ''));
+          star.setAttribute('viewBox', '0 0 24 24');
+          star.innerHTML = '<path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>';
+          modalRating.appendChild(star);
+        }
+
+        modalProducts.innerHTML = '';
+        if (data.products && data.products.length > 0) {
+          const template = this.querySelector('[data-product-template]');
+          data.products.forEach((product) => {
+            const clone = template.content.cloneNode(true);
+            const link = clone.querySelector('[data-product-link]');
+            const image = clone.querySelector('[data-product-image]');
+            const title = clone.querySelector('[data-product-title]');
+            const price = clone.querySelector('[data-product-price]');
+
+            link.href = product.url;
+            image.src = product.imageUrl;
+            image.alt = product.imageAlt;
+            title.textContent = product.title;
+            price.textContent = product.price;
+
+            modalProducts.appendChild(clone);
+          });
+        } else {
+          modalProducts.innerHTML = '<div class="ai-video-reviews__modal-empty-{{ ai_gen_id }}">No products tagged in this video</div>';
+        }
+
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+      }
+
+      closeModal() {
+        const modal = this.querySelector('[data-modal]');
+        const modalVideo = this.querySelector('[data-modal-video]');
+        
+        modalVideo.src = '';
+        modal.classList.remove('active');
+        document.body.style.overflow = '';
+      }
+    }
+
+    customElements.define('video-reviews-{{ ai_gen_id }}', VideoReviews{{ ai_gen_id }});
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "Video reviews",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Section heading"
+    },
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Title",
+      "default": "Customer Video Reviews"
+    },
+    {
+      "type": "font_picker",
+      "id": "title_font",
+      "label": "Title font",
+      "default": "tenor_sans_n4"
+    },
+    {
+      "type": "range",
+      "id": "title_size",
+      "label": "Title size",
+      "min": 20,
+      "max": 60,
+      "step": 2,
+      "unit": "px",
+      "default": 36
+    },
+    {
+      "type": "text",
+      "id": "subtitle",
+      "label": "Subtitle",
+      "default": "See what our customers are saying"
+    },
+    {
+      "type": "range",
+      "id": "subtitle_size",
+      "label": "Subtitle size",
+      "min": 12,
+      "max": 24,
+      "step": 1,
+      "unit": "px",
+      "default": 16
+    },
+    {
+      "type": "header",
+      "content": "Layout"
+    },
+    {
+      "type": "range",
+      "id": "desktop_columns",
+      "label": "Desktop columns",
+      "min": 3,
+      "max": 6,
+      "step": 1,
+      "default": 5
+    },
+    {
+      "type": "range",
+      "id": "card_spacing",
+      "label": "Card spacing",
+      "min": 10,
+      "max": 40,
+      "step": 5,
+      "unit": "px",
+      "default": 15
+    },
+    {
+      "type": "range",
+      "id": "card_border_radius",
+      "label": "Card border radius",
+      "min": 0,
+      "max": 24,
+      "step": 2,
+      "unit": "px",
+      "default": 8
+    },
+    {
+      "type": "header",
+      "content": "Colors"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Background",
+      "default": "#faf6f1"
+    },
+    {
+      "type": "color",
+      "id": "card_background",
+      "label": "Card background",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Text",
+      "default": "#2c1f14"
+    },
+    {
+      "type": "color",
+      "id": "star_color",
+      "label": "Star rating",
+      "default": "#c4a882"
+    },
+    {
+      "type": "header",
+      "content": "Video 1"
+    },
+    {
+      "type": "url",
+      "id": "video_url_1",
+      "label": "YouTube or Instagram URL"
+    },
+    {
+      "type": "product_list",
+      "id": "products_1",
+      "label": "Products featured",
+      "limit": 5
+    },
+    {
+      "type": "text",
+      "id": "reviewer_name_1",
+      "label": "Reviewer name"
+    },
+    {
+      "type": "range",
+      "id": "rating_1",
+      "label": "Rating",
+      "min": 1,
+      "max": 5,
+      "step": 1,
+      "default": 5
+    },
+    {
+      "type": "textarea",
+      "id": "review_text_1",
+      "label": "Review text"
+    },
+    {
+      "type": "header",
+      "content": "Video 2"
+    },
+    {
+      "type": "url",
+      "id": "video_url_2",
+      "label": "YouTube or Instagram URL"
+    },
+    {
+      "type": "product_list",
+      "id": "products_2",
+      "label": "Products featured",
+      "limit": 5
+    },
+    {
+      "type": "text",
+      "id": "reviewer_name_2",
+      "label": "Reviewer name"
+    },
+    {
+      "type": "range",
+      "id": "rating_2",
+      "label": "Rating",
+      "min": 1,
+      "max": 5,
+      "step": 1,
+      "default": 5
+    },
+    {
+      "type": "textarea",
+      "id": "review_text_2",
+      "label": "Review text"
+    },
+    {
+      "type": "header",
+      "content": "Video 3"
+    },
+    {
+      "type": "url",
+      "id": "video_url_3",
+      "label": "YouTube or Instagram URL"
+    },
+    {
+      "type": "product_list",
+      "id": "products_3",
+      "label": "Products featured",
+      "limit": 5
+    },
+    {
+      "type": "text",
+      "id": "reviewer_name_3",
+      "label": "Reviewer name"
+    },
+    {
+      "type": "range",
+      "id": "rating_3",
+      "label": "Rating",
+      "min": 1,
+      "max": 5,
+      "step": 1,
+      "default": 5
+    },
+    {
+      "type": "textarea",
+      "id": "review_text_3",
+      "label": "Review text"
+    },
+    {
+      "type": "header",
+      "content": "Video 4"
+    },
+    {
+      "type": "url",
+      "id": "video_url_4",
+      "label": "YouTube or Instagram URL"
+    },
+    {
+      "type": "product_list",
+      "id": "products_4",
+      "label": "Products featured",
+      "limit": 5
+    },
+    {
+      "type": "text",
+      "id": "reviewer_name_4",
+      "label": "Reviewer name"
+    },
+    {
+      "type": "range",
+      "id": "rating_4",
+      "label": "Rating",
+      "min": 1,
+      "max": 5,
+      "step": 1,
+      "default": 5
+    },
+    {
+      "type": "textarea",
+      "id": "review_text_4",
+      "label": "Review text"
+    },
+    {
+      "type": "header",
+      "content": "Video 5"
+    },
+    {
+      "type": "url",
+      "id": "video_url_5",
+      "label": "YouTube or Instagram URL"
+    },
+    {
+      "type": "product_list",
+      "id": "products_5",
+      "label": "Products featured",
+      "limit": 5
+    },
+    {
+      "type": "text",
+      "id": "reviewer_name_5",
+      "label": "Reviewer name"
+    },
+    {
+      "type": "range",
+      "id": "rating_5",
+      "label": "Rating",
+      "min": 1,
+      "max": 5,
+      "step": 1,
+      "default": 5
+    },
+    {
+      "type": "textarea",
+      "id": "review_text_5",
+      "label": "Review text"
+    },
+    {
+      "type": "header",
+      "content": "Video 6"
+    },
+    {
+      "type": "url",
+      "id": "video_url_6",
+      "label": "YouTube or Instagram URL"
+    },
+    {
+      "type": "product_list",
+      "id": "products_6",
+      "label": "Products featured",
+      "limit": 5
+    },
+    {
+      "type": "text",
+      "id": "reviewer_name_6",
+      "label": "Reviewer name"
+    },
+    {
+      "type": "range",
+      "id": "rating_6",
+      "label": "Rating",
+      "min": 1,
+      "max": 5,
+      "step": 1,
+      "default": 5
+    },
+    {
+      "type": "textarea",
+      "id": "review_text_6",
+      "label": "Review text"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Video reviews"
+    }
+  ]
+}
+{% endschema %}

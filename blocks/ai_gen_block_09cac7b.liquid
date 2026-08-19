@@ -1,0 +1,715 @@
+{% doc %}
+  @prompt
+    Create a new theme section that displays a grid/carousel of Instagram Reels and YouTube Shorts video reviews. The section should match the existing website's theme (colors, fonts, spacing, and style). It should include: a section heading like "What Our Customers Say", embedded video blocks where merchants can paste Reel or YouTube Shorts URLs, a clean card-style layout with optional caption/reviewer name below each video, and be fully responsive on mobile and desktop.
+{% enddoc %}
+{% assign ai_gen_id = block.id | replace: '_', '' | downcase %}
+
+{% style %}
+  .ai-video-reviews-{{ ai_gen_id }} {
+    display: block;
+    width: 100%;
+    padding: 60px 20px;
+    background-color: {{ block.settings.background_color }};
+  }
+
+  .ai-video-reviews__container-{{ ai_gen_id }} {
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  .ai-video-reviews__header-{{ ai_gen_id }} {
+    text-align: center;
+    margin-bottom: 50px;
+  }
+
+  .ai-video-reviews__heading-{{ ai_gen_id }} {
+    font-family: {{ block.settings.heading_font.family }}, {{ block.settings.heading_font.fallback_families }};
+    font-weight: {{ block.settings.heading_font.weight }};
+    font-style: {{ block.settings.heading_font.style }};
+    color: {{ block.settings.heading_color }};
+    font-size: {{ block.settings.heading_size }}px;
+    line-height: 1.2;
+    margin: 0 0 15px;
+    {% if block.settings.heading_uppercase %}
+      text-transform: uppercase;
+    {% endif %}
+    letter-spacing: 0.05em;
+  }
+
+  .ai-video-reviews__subheading-{{ ai_gen_id }} {
+    font-family: {{ block.settings.text_font.family }}, {{ block.settings.text_font.fallback_families }};
+    font-weight: {{ block.settings.text_font.weight }};
+    color: {{ block.settings.text_color }};
+    font-size: {{ block.settings.subheading_size }}px;
+    line-height: 1.5;
+    margin: 0;
+  }
+
+  .ai-video-reviews__grid-{{ ai_gen_id }} {
+    display: grid;
+    grid-template-columns: repeat({{ block.settings.desktop_columns }}, 1fr);
+    gap: {{ block.settings.grid_gap }}px;
+    margin-bottom: 30px;
+  }
+
+  .ai-video-reviews__card-{{ ai_gen_id }} {
+    background-color: {{ block.settings.card_background }};
+    border-radius: {{ block.settings.card_border_radius }}px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(44, 31, 20, 0.08);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .ai-video-reviews__card-{{ ai_gen_id }}:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(44, 31, 20, 0.12);
+  }
+
+  .ai-video-reviews__video-wrapper-{{ ai_gen_id }} {
+    position: relative;
+    width: 100%;
+    padding-bottom: 177.78%;
+    background-color: #f5efe6;
+    overflow: hidden;
+  }
+
+  .ai-video-reviews__video-wrapper-{{ ai_gen_id }} iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+  }
+
+  .ai-video-reviews__placeholder-{{ ai_gen_id }} {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: #f5efe6;
+    color: #2c1f14;
+    padding: 20px;
+    text-align: center;
+  }
+
+  .ai-video-reviews__placeholder-{{ ai_gen_id }} svg {
+    width: 60px;
+    height: 60px;
+    margin-bottom: 15px;
+    opacity: 0.3;
+  }
+
+  .ai-video-reviews__placeholder-text-{{ ai_gen_id }} {
+    font-size: 14px;
+    opacity: 0.6;
+  }
+
+  .ai-video-reviews__card-content-{{ ai_gen_id }} {
+    padding: 20px;
+  }
+
+  .ai-video-reviews__reviewer-{{ ai_gen_id }} {
+    font-family: {{ block.settings.text_font.family }}, {{ block.settings.text_font.fallback_families }};
+    font-weight: 600;
+    color: {{ block.settings.text_color }};
+    font-size: 16px;
+    margin: 0 0 8px;
+  }
+
+  .ai-video-reviews__caption-{{ ai_gen_id }} {
+    font-family: {{ block.settings.text_font.family }}, {{ block.settings.text_font.fallback_families }};
+    color: {{ block.settings.text_color }};
+    font-size: 14px;
+    line-height: 1.5;
+    margin: 0;
+    opacity: 0.85;
+  }
+
+  .ai-video-reviews__controls-{{ ai_gen_id }} {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    margin-top: 30px;
+  }
+
+  .ai-video-reviews__nav-button-{{ ai_gen_id }} {
+    background-color: {{ block.settings.button_color }};
+    color: {{ block.settings.button_text_color }};
+    border: none;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+  }
+
+  .ai-video-reviews__nav-button-{{ ai_gen_id }}:hover {
+    background-color: {{ block.settings.button_hover_color }};
+    transform: scale(1.05);
+  }
+
+  .ai-video-reviews__nav-button-{{ ai_gen_id }}:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    transform: scale(1);
+  }
+
+  .ai-video-reviews__nav-button-{{ ai_gen_id }} svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .ai-video-reviews__dots-{{ ai_gen_id }} {
+    display: flex;
+    gap: 8px;
+  }
+
+  .ai-video-reviews__dot-{{ ai_gen_id }} {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: {{ block.settings.text_color }};
+    opacity: 0.3;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    transition: opacity 0.3s ease, transform 0.2s ease;
+  }
+
+  .ai-video-reviews__dot-{{ ai_gen_id }}.active {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+
+  @media screen and (max-width: 989px) {
+    .ai-video-reviews-{{ ai_gen_id }} {
+      padding: 40px 20px;
+    }
+
+    .ai-video-reviews__grid-{{ ai_gen_id }} {
+      grid-template-columns: repeat(2, 1fr);
+      gap: {{ block.settings.grid_gap | times: 0.75 }}px;
+    }
+
+    .ai-video-reviews__heading-{{ ai_gen_id }} {
+      font-size: {{ block.settings.heading_size | times: 0.8 }}px;
+    }
+
+    .ai-video-reviews__subheading-{{ ai_gen_id }} {
+      font-size: {{ block.settings.subheading_size | times: 0.9 }}px;
+    }
+  }
+
+  @media screen and (max-width: 749px) {
+    .ai-video-reviews__grid-{{ ai_gen_id }} {
+      grid-template-columns: 1fr;
+      gap: {{ block.settings.grid_gap | times: 0.5 }}px;
+    }
+
+    .ai-video-reviews__card-content-{{ ai_gen_id }} {
+      padding: 15px;
+    }
+
+    .ai-video-reviews__heading-{{ ai_gen_id }} {
+      font-size: {{ block.settings.heading_size | times: 0.7 }}px;
+    }
+  }
+{% endstyle %}
+
+<video-reviews-{{ ai_gen_id }} class="ai-video-reviews-{{ ai_gen_id }}" {{ block.shopify_attributes }}>
+  <div class="ai-video-reviews__container-{{ ai_gen_id }}">
+    {% if block.settings.heading != blank or block.settings.subheading != blank %}
+      <div class="ai-video-reviews__header-{{ ai_gen_id }}">
+        {% if block.settings.heading != blank %}
+          <h2 class="ai-video-reviews__heading-{{ ai_gen_id }}">{{ block.settings.heading }}</h2>
+        {% endif %}
+        {% if block.settings.subheading != blank %}
+          <p class="ai-video-reviews__subheading-{{ ai_gen_id }}">{{ block.settings.subheading }}</p>
+        {% endif %}
+      </div>
+    {% endif %}
+
+    <div class="ai-video-reviews__grid-{{ ai_gen_id }}" data-carousel-container>
+      {% for i in (1..6) %}
+        {% liquid
+          assign video_url_key = 'video_url_' | append: i
+          assign reviewer_key = 'reviewer_name_' | append: i
+          assign caption_key = 'video_caption_' | append: i
+          
+          assign video_url = block.settings[video_url_key]
+          assign reviewer_name = block.settings[reviewer_key]
+          assign video_caption = block.settings[caption_key]
+        %}
+
+        <div class="ai-video-reviews__card-{{ ai_gen_id }}" data-video-card>
+          <div class="ai-video-reviews__video-wrapper-{{ ai_gen_id }}">
+            {% if video_url != blank %}
+              {% liquid
+                assign embed_url = ''
+                
+                if video_url contains 'instagram.com/reel'
+                  assign reel_id = video_url | split: '/reel/' | last | split: '/' | first | split: '?' | first
+                  assign embed_url = 'https://www.instagram.com/reel/' | append: reel_id | append: '/embed'
+                elsif video_url contains 'youtube.com/shorts'
+                  assign video_id = video_url | split: '/shorts/' | last | split: '?' | first
+                  assign embed_url = 'https://www.youtube.com/embed/' | append: video_id
+                elsif video_url contains 'youtu.be'
+                  assign video_id = video_url | split: 'youtu.be/' | last | split: '?' | first
+                  assign embed_url = 'https://www.youtube.com/embed/' | append: video_id
+                endif
+              %}
+
+              {% if embed_url != blank %}
+                <iframe
+                  src="{{ embed_url }}"
+                  loading="lazy"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowfullscreen
+                ></iframe>
+              {% else %}
+                <div class="ai-video-reviews__placeholder-{{ ai_gen_id }}">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="23 7 16 12 23 17 23 7"></polygon>
+                    <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+                  </svg>
+                  <div class="ai-video-reviews__placeholder-text-{{ ai_gen_id }}">
+                    Invalid video URL format
+                  </div>
+                </div>
+              {% endif %}
+            {% else %}
+              <div class="ai-video-reviews__placeholder-{{ ai_gen_id }}">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polygon points="23 7 16 12 23 17 23 7"></polygon>
+                  <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+                </svg>
+                <div class="ai-video-reviews__placeholder-text-{{ ai_gen_id }}">
+                  Add a video URL
+                </div>
+              </div>
+            {% endif %}
+          </div>
+
+          {% if reviewer_name != blank or video_caption != blank %}
+            <div class="ai-video-reviews__card-content-{{ ai_gen_id }}">
+              {% if reviewer_name != blank %}
+                <h3 class="ai-video-reviews__reviewer-{{ ai_gen_id }}">{{ reviewer_name }}</h3>
+              {% endif %}
+              {% if video_caption != blank %}
+                <p class="ai-video-reviews__caption-{{ ai_gen_id }}">{{ video_caption }}</p>
+              {% endif %}
+            </div>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+
+    {% if block.settings.enable_carousel %}
+      <div class="ai-video-reviews__controls-{{ ai_gen_id }}">
+        <button
+          class="ai-video-reviews__nav-button-{{ ai_gen_id }}"
+          data-prev-button
+          aria-label="Previous videos"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+        </button>
+
+        <div class="ai-video-reviews__dots-{{ ai_gen_id }}" data-dots-container></div>
+
+        <button
+          class="ai-video-reviews__nav-button-{{ ai_gen_id }}"
+          data-next-button
+          aria-label="Next videos"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </button>
+      </div>
+    {% endif %}
+  </div>
+</video-reviews-{{ ai_gen_id }}>
+
+<script>
+  (function() {
+    class VideoReviews{{ ai_gen_id }} extends HTMLElement {
+      constructor() {
+        super();
+        this.currentPage = 0;
+        this.itemsPerPage = {{ block.settings.desktop_columns }};
+      }
+
+      connectedCallback() {
+        if (!{{ block.settings.enable_carousel }}) return;
+
+        this.container = this.querySelector('[data-carousel-container]');
+        this.cards = Array.from(this.querySelectorAll('[data-video-card]'));
+        this.prevButton = this.querySelector('[data-prev-button]');
+        this.nextButton = this.querySelector('[data-next-button]');
+        this.dotsContainer = this.querySelector('[data-dots-container]');
+
+        this.visibleCards = this.cards.filter(card => {
+          const videoWrapper = card.querySelector('.ai-video-reviews__video-wrapper-{{ ai_gen_id }}');
+          return videoWrapper && (videoWrapper.querySelector('iframe') || videoWrapper.querySelector('.ai-video-reviews__placeholder-{{ ai_gen_id }}'));
+        });
+
+        if (this.visibleCards.length <= this.itemsPerPage) {
+          this.querySelector('.ai-video-reviews__controls-{{ ai_gen_id }}').style.display = 'none';
+          return;
+        }
+
+        this.totalPages = Math.ceil(this.visibleCards.length / this.itemsPerPage);
+        this.setupCarousel();
+        this.setupEventListeners();
+        this.updateCarousel();
+      }
+
+      setupCarousel() {
+        this.cards.forEach(card => {
+          card.style.display = 'none';
+        });
+
+        for (let i = 0; i < this.totalPages; i++) {
+          const dot = document.createElement('button');
+          dot.className = 'ai-video-reviews__dot-{{ ai_gen_id }}';
+          dot.setAttribute('aria-label', `Go to page ${i + 1}`);
+          dot.addEventListener('click', () => this.goToPage(i));
+          this.dotsContainer.appendChild(dot);
+        }
+      }
+
+      setupEventListeners() {
+        this.prevButton.addEventListener('click', () => this.previousPage());
+        this.nextButton.addEventListener('click', () => this.nextPage());
+      }
+
+      updateCarousel() {
+        this.cards.forEach(card => {
+          card.style.display = 'none';
+        });
+
+        const startIndex = this.currentPage * this.itemsPerPage;
+        const endIndex = startIndex + this.itemsPerPage;
+        
+        for (let i = startIndex; i < endIndex && i < this.visibleCards.length; i++) {
+          this.visibleCards[i].style.display = 'block';
+        }
+
+        this.prevButton.disabled = this.currentPage === 0;
+        this.nextButton.disabled = this.currentPage === this.totalPages - 1;
+
+        const dots = this.dotsContainer.querySelectorAll('.ai-video-reviews__dot-{{ ai_gen_id }}');
+        dots.forEach((dot, index) => {
+          if (index === this.currentPage) {
+            dot.classList.add('active');
+          } else {
+            dot.classList.remove('active');
+          }
+        });
+      }
+
+      previousPage() {
+        if (this.currentPage > 0) {
+          this.currentPage--;
+          this.updateCarousel();
+        }
+      }
+
+      nextPage() {
+        if (this.currentPage < this.totalPages - 1) {
+          this.currentPage++;
+          this.updateCarousel();
+        }
+      }
+
+      goToPage(pageIndex) {
+        this.currentPage = pageIndex;
+        this.updateCarousel();
+      }
+    }
+
+    customElements.define('video-reviews-{{ ai_gen_id }}', VideoReviews{{ ai_gen_id }});
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "Video reviews",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Section heading"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "What Our Customers Say"
+    },
+    {
+      "type": "textarea",
+      "id": "subheading",
+      "label": "Subheading",
+      "default": "Real reviews from real customers"
+    },
+    {
+      "type": "font_picker",
+      "id": "heading_font",
+      "label": "Heading font",
+      "default": "tenor_sans_n4"
+    },
+    {
+      "type": "range",
+      "id": "heading_size",
+      "label": "Heading size",
+      "min": 20,
+      "max": 60,
+      "step": 2,
+      "unit": "px",
+      "default": 36
+    },
+    {
+      "type": "checkbox",
+      "id": "heading_uppercase",
+      "label": "Uppercase heading",
+      "default": true
+    },
+    {
+      "type": "range",
+      "id": "subheading_size",
+      "label": "Subheading size",
+      "min": 12,
+      "max": 24,
+      "step": 1,
+      "unit": "px",
+      "default": 16
+    },
+    {
+      "type": "header",
+      "content": "Layout"
+    },
+    {
+      "type": "range",
+      "id": "desktop_columns",
+      "label": "Desktop columns",
+      "min": 2,
+      "max": 4,
+      "step": 1,
+      "default": 3
+    },
+    {
+      "type": "range",
+      "id": "grid_gap",
+      "label": "Grid gap",
+      "min": 10,
+      "max": 50,
+      "step": 5,
+      "unit": "px",
+      "default": 25
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_carousel",
+      "label": "Enable carousel navigation",
+      "default": true
+    },
+    {
+      "type": "header",
+      "content": "Colors"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Background",
+      "default": "#faf6f1"
+    },
+    {
+      "type": "color",
+      "id": "heading_color",
+      "label": "Heading",
+      "default": "#2c1f14"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Text",
+      "default": "#2c1f14"
+    },
+    {
+      "type": "color",
+      "id": "card_background",
+      "label": "Card background",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "button_color",
+      "label": "Button",
+      "default": "#c4a882"
+    },
+    {
+      "type": "color",
+      "id": "button_text_color",
+      "label": "Button text",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "button_hover_color",
+      "label": "Button hover",
+      "default": "#2c1f14"
+    },
+    {
+      "type": "header",
+      "content": "Style"
+    },
+    {
+      "type": "font_picker",
+      "id": "text_font",
+      "label": "Text font",
+      "default": "twentieth_century_n4"
+    },
+    {
+      "type": "range",
+      "id": "card_border_radius",
+      "label": "Card border radius",
+      "min": 0,
+      "max": 20,
+      "step": 2,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "header",
+      "content": "Video 1"
+    },
+    {
+      "type": "url",
+      "id": "video_url_1",
+      "label": "Video URL"
+    },
+    {
+      "type": "text",
+      "id": "reviewer_name_1",
+      "label": "Reviewer name"
+    },
+    {
+      "type": "textarea",
+      "id": "video_caption_1",
+      "label": "Caption"
+    },
+    {
+      "type": "header",
+      "content": "Video 2"
+    },
+    {
+      "type": "url",
+      "id": "video_url_2",
+      "label": "Video URL"
+    },
+    {
+      "type": "text",
+      "id": "reviewer_name_2",
+      "label": "Reviewer name"
+    },
+    {
+      "type": "textarea",
+      "id": "video_caption_2",
+      "label": "Caption"
+    },
+    {
+      "type": "header",
+      "content": "Video 3"
+    },
+    {
+      "type": "url",
+      "id": "video_url_3",
+      "label": "Video URL"
+    },
+    {
+      "type": "text",
+      "id": "reviewer_name_3",
+      "label": "Reviewer name"
+    },
+    {
+      "type": "textarea",
+      "id": "video_caption_3",
+      "label": "Caption"
+    },
+    {
+      "type": "header",
+      "content": "Video 4"
+    },
+    {
+      "type": "url",
+      "id": "video_url_4",
+      "label": "Video URL"
+    },
+    {
+      "type": "text",
+      "id": "reviewer_name_4",
+      "label": "Reviewer name"
+    },
+    {
+      "type": "textarea",
+      "id": "video_caption_4",
+      "label": "Caption"
+    },
+    {
+      "type": "header",
+      "content": "Video 5"
+    },
+    {
+      "type": "url",
+      "id": "video_url_5",
+      "label": "Video URL"
+    },
+    {
+      "type": "text",
+      "id": "reviewer_name_5",
+      "label": "Reviewer name"
+    },
+    {
+      "type": "textarea",
+      "id": "video_caption_5",
+      "label": "Caption"
+    },
+    {
+      "type": "header",
+      "content": "Video 6"
+    },
+    {
+      "type": "url",
+      "id": "video_url_6",
+      "label": "Video URL"
+    },
+    {
+      "type": "text",
+      "id": "reviewer_name_6",
+      "label": "Reviewer name"
+    },
+    {
+      "type": "textarea",
+      "id": "video_caption_6",
+      "label": "Caption"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Video reviews"
+    }
+  ]
+}
+{% endschema %}

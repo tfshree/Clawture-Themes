@@ -1,0 +1,1162 @@
+{% doc %}
+  @prompt
+    Create a custom Shopify Liquid section that displays a responsive grid of vertical video cards styled like a modern beauty brand (press-on nails aesthetic). Requirements:
+    
+    - Responsive grid: 5 columns on desktop, 2 columns on mobile
+    - Each card contains a vertical MP4 video (NOT YouTube iframe) using Shopify product.media
+    - Videos autoplay, muted, loop, and playsinline
+    - Videos use object-fit: cover to fill the card vertically
+    - Fallback to product featured image if no video media is available
+    - Pull products from a selected collection (configurable in schema)
+    - Full CSS styling inside the section that matches the existing theme's fonts, colors, and aesthetic
+    - Schema block so it appears in the Shopify theme editor with settings for collection selection, number of products, section title
+    - Hover effect: slight zoom on the card
+    - Mobile horizontal scroll/swipe support
+    - No YouTube iframes or branding anywhere
+    - Clean, modern beauty brand look with smooth transitions, how do i upload video on each video card?i need it as a video review section to product link to each video card , only 5 videos are okay but give me option to add more in future, make this way so that i can add my videos to and link url too, make this way so ican add text down and also give that star rating 
+{% enddoc %}
+{% assign ai_gen_id = block.id | replace: '_', '' | downcase %}
+
+{% style %}
+  .ai-video-review-grid-{{ ai_gen_id }} {
+    display: block;
+    width: 100%;
+    background-color: {{ block.settings.background_color }};
+    padding: {{ block.settings.section_padding }}px 20px;
+  }
+
+  .ai-video-review-container-{{ ai_gen_id }} {
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  .ai-video-review-header-{{ ai_gen_id }} {
+    text-align: center;
+    margin-bottom: {{ block.settings.header_spacing }}px;
+  }
+
+  .ai-video-review-title-{{ ai_gen_id }} {
+    font-family: {{ block.settings.heading_font.family }}, {{ block.settings.heading_font.fallback_families }};
+    font-weight: {{ block.settings.heading_font.weight }};
+    font-size: {{ block.settings.heading_size }}px;
+    color: {{ block.settings.text_color }};
+    margin: 0 0 12px;
+    {% if block.settings.heading_uppercase %}text-transform: uppercase;{% endif %}
+    letter-spacing: 0.05em;
+  }
+
+  .ai-video-review-subtitle-{{ ai_gen_id }} {
+    font-family: {{ block.settings.body_font.family }}, {{ block.settings.body_font.fallback_families }};
+    font-weight: {{ block.settings.body_font.weight }};
+    font-size: {{ block.settings.body_size }}px;
+    color: {{ block.settings.text_color }};
+    opacity: 0.8;
+    margin: 0;
+  }
+
+  .ai-video-review-wrapper-{{ ai_gen_id }} {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: {{ block.settings.grid_gap }}px;
+  }
+
+  .ai-video-review-card-{{ ai_gen_id }} {
+    display: flex;
+    flex-direction: column;
+    background-color: {{ block.settings.card_background }};
+    border-radius: {{ block.settings.border_radius }}px;
+    overflow: hidden;
+    transition: transform 0.3s ease;
+  }
+
+  .ai-video-review-card-{{ ai_gen_id }}:hover {
+    transform: translateY(-4px);
+  }
+
+  .ai-video-review-video-wrapper-{{ ai_gen_id }} {
+    position: relative;
+    aspect-ratio: 9 / 16;
+    overflow: hidden;
+    cursor: pointer;
+  }
+
+  .ai-video-review-link-{{ ai_gen_id }} {
+    display: block;
+    width: 100%;
+    height: 100%;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .ai-video-review-video-{{ ai_gen_id }} {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .ai-video-review-placeholder-{{ ai_gen_id }} {
+    width: 100%;
+    height: 100%;
+    background-color: {{ block.settings.card_background }};
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    padding: 20px;
+    text-align: center;
+  }
+
+  .ai-video-review-placeholder-{{ ai_gen_id }} svg {
+    width: 60px;
+    height: 60px;
+    opacity: 0.3;
+    margin-bottom: 12px;
+  }
+
+  .ai-video-review-placeholder-text-{{ ai_gen_id }} {
+    font-family: {{ block.settings.body_font.family }}, {{ block.settings.body_font.fallback_families }};
+    font-size: 12px;
+    color: {{ block.settings.text_color }};
+    opacity: 0.5;
+  }
+
+  .ai-video-review-content-{{ ai_gen_id }} {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .ai-video-review-stars-{{ ai_gen_id }} {
+    display: flex;
+    gap: 2px;
+    align-items: center;
+  }
+
+  .ai-video-review-star-{{ ai_gen_id }} {
+    width: 16px;
+    height: 16px;
+    fill: {{ block.settings.star_color }};
+  }
+
+  .ai-video-review-star-empty-{{ ai_gen_id }} {
+    fill: {{ block.settings.star_empty_color }};
+  }
+
+  .ai-video-review-name-{{ ai_gen_id }} {
+    font-family: {{ block.settings.body_font.family }}, {{ block.settings.body_font.fallback_families }};
+    font-weight: 600;
+    font-size: 14px;
+    color: {{ block.settings.text_color }};
+    margin: 0;
+  }
+
+  .ai-video-review-text-{{ ai_gen_id }} {
+    font-family: {{ block.settings.body_font.family }}, {{ block.settings.body_font.fallback_families }};
+    font-weight: {{ block.settings.body_font.weight }};
+    font-size: 13px;
+    color: {{ block.settings.text_color }};
+    opacity: 0.85;
+    margin: 0;
+    line-height: 1.5;
+  }
+
+  @media screen and (max-width: 989px) {
+    .ai-video-review-wrapper-{{ ai_gen_id }} {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  @media screen and (max-width: 749px) {
+    .ai-video-review-wrapper-{{ ai_gen_id }} {
+      display: flex;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      gap: 12px;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+
+    .ai-video-review-wrapper-{{ ai_gen_id }}::-webkit-scrollbar {
+      display: none;
+    }
+
+    .ai-video-review-card-{{ ai_gen_id }} {
+      flex: 0 0 calc(50% - 6px);
+      scroll-snap-align: start;
+    }
+
+    .ai-video-review-title-{{ ai_gen_id }} {
+      font-size: {{ block.settings.heading_size | times: 0.7 }}px;
+    }
+
+    .ai-video-review-subtitle-{{ ai_gen_id }} {
+      font-size: {{ block.settings.body_size | times: 0.9 }}px;
+    }
+  }
+{% endstyle %}
+
+<video-review-grid-{{ ai_gen_id }} class="ai-video-review-grid-{{ ai_gen_id }}" {{ block.shopify_attributes }}>
+  <div class="ai-video-review-container-{{ ai_gen_id }}">
+    {% if block.settings.heading != blank or block.settings.subheading != blank %}
+      <div class="ai-video-review-header-{{ ai_gen_id }}">
+        {% if block.settings.heading != blank %}
+          <h2 class="ai-video-review-title-{{ ai_gen_id }}">{{ block.settings.heading }}</h2>
+        {% endif %}
+        {% if block.settings.subheading != blank %}
+          <p class="ai-video-review-subtitle-{{ ai_gen_id }}">{{ block.settings.subheading }}</p>
+        {% endif %}
+      </div>
+    {% endif %}
+
+    <div class="ai-video-review-wrapper-{{ ai_gen_id }}">
+      {% for i in (1..block.settings.video_count) %}
+        {% liquid
+          assign video_url_key = 'video_url_' | append: i
+          assign link_url_key = 'link_url_' | append: i
+          assign customer_name_key = 'customer_name_' | append: i
+          assign review_text_key = 'review_text_' | append: i
+          assign rating_key = 'rating_' | append: i
+
+          assign video_url = block.settings[video_url_key]
+          assign link_url = block.settings[link_url_key]
+          assign customer_name = block.settings[customer_name_key]
+          assign review_text = block.settings[review_text_key]
+          assign rating = block.settings[rating_key]
+        %}
+
+        <div class="ai-video-review-card-{{ ai_gen_id }}">
+          <div class="ai-video-review-video-wrapper-{{ ai_gen_id }}">
+            {% if link_url != blank %}
+              <a href="{{ link_url }}" class="ai-video-review-link-{{ ai_gen_id }}">
+            {% else %}
+              <div class="ai-video-review-link-{{ ai_gen_id }}">
+            {% endif %}
+
+              {% if video_url != blank %}
+                <video
+                  class="ai-video-review-video-{{ ai_gen_id }}"
+                  autoplay
+                  muted
+                  loop
+                  playsinline
+                  data-video-index="{{ i }}"
+                >
+                  <source src="{{ video_url }}" type="video/mp4">
+                </video>
+              {% else %}
+                <div class="ai-video-review-placeholder-{{ ai_gen_id }}">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                  </svg>
+                  <p class="ai-video-review-placeholder-text-{{ ai_gen_id }}">Add video {{ i }}</p>
+                </div>
+              {% endif %}
+
+            {% if link_url != blank %}
+              </a>
+            {% else %}
+              </div>
+            {% endif %}
+          </div>
+
+          <div class="ai-video-review-content-{{ ai_gen_id }}">
+            {% if rating > 0 %}
+              <div class="ai-video-review-stars-{{ ai_gen_id }}">
+                {% for star in (1..5) %}
+                  <svg class="ai-video-review-star-{{ ai_gen_id }} {% if star > rating %}ai-video-review-star-empty-{{ ai_gen_id }}{% endif %}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                  </svg>
+                {% endfor %}
+              </div>
+            {% endif %}
+
+            {% if customer_name != blank %}
+              <p class="ai-video-review-name-{{ ai_gen_id }}">{{ customer_name }}</p>
+            {% endif %}
+
+            {% if review_text != blank %}
+              <p class="ai-video-review-text-{{ ai_gen_id }}">{{ review_text }}</p>
+            {% endif %}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</video-review-grid-{{ ai_gen_id }}>
+
+<script>
+  (function() {
+    class VideoReviewGrid{{ ai_gen_id }} extends HTMLElement {
+      constructor() {
+        super();
+        this.videos = [];
+      }
+
+      connectedCallback() {
+        this.videos = this.querySelectorAll('.ai-video-review-video-{{ ai_gen_id }}');
+        this.setupIntersectionObserver();
+      }
+
+      setupIntersectionObserver() {
+        const options = {
+          root: null,
+          rootMargin: '0px',
+          threshold: 0.5
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+          entries.forEach((entry) => {
+            const video = entry.target;
+            if (entry.isIntersecting) {
+              video.play().catch(() => {});
+            } else {
+              video.pause();
+            }
+          });
+        }, options);
+
+        this.videos.forEach((video) => {
+          observer.observe(video);
+        });
+      }
+    }
+
+    customElements.define('video-review-grid-{{ ai_gen_id }}', VideoReviewGrid{{ ai_gen_id }});
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "Video review grid",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Content"
+    },
+    {
+      "type": "inline_richtext",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Customer Reviews"
+    },
+    {
+      "type": "inline_richtext",
+      "id": "subheading",
+      "label": "Subheading",
+      "default": "See what our customers are saying"
+    },
+    {
+      "type": "range",
+      "id": "video_count",
+      "label": "Number of video slots",
+      "min": 5,
+      "max": 20,
+      "step": 5,
+      "default": 5
+    },
+    {
+      "type": "header",
+      "content": "Video 1"
+    },
+    {
+      "type": "text",
+      "id": "video_url_1",
+      "label": "Video URL",
+      "info": "Upload video to Settings > Files, then paste URL here"
+    },
+    {
+      "type": "url",
+      "id": "link_url_1",
+      "label": "Link URL"
+    },
+    {
+      "type": "text",
+      "id": "customer_name_1",
+      "label": "Customer name"
+    },
+    {
+      "type": "textarea",
+      "id": "review_text_1",
+      "label": "Review text"
+    },
+    {
+      "type": "range",
+      "id": "rating_1",
+      "label": "Star rating",
+      "min": 0,
+      "max": 5,
+      "step": 1,
+      "default": 5
+    },
+    {
+      "type": "header",
+      "content": "Video 2"
+    },
+    {
+      "type": "text",
+      "id": "video_url_2",
+      "label": "Video URL",
+      "info": "Upload video to Settings > Files, then paste URL here"
+    },
+    {
+      "type": "url",
+      "id": "link_url_2",
+      "label": "Link URL"
+    },
+    {
+      "type": "text",
+      "id": "customer_name_2",
+      "label": "Customer name"
+    },
+    {
+      "type": "textarea",
+      "id": "review_text_2",
+      "label": "Review text"
+    },
+    {
+      "type": "range",
+      "id": "rating_2",
+      "label": "Star rating",
+      "min": 0,
+      "max": 5,
+      "step": 1,
+      "default": 5
+    },
+    {
+      "type": "header",
+      "content": "Video 3"
+    },
+    {
+      "type": "text",
+      "id": "video_url_3",
+      "label": "Video URL",
+      "info": "Upload video to Settings > Files, then paste URL here"
+    },
+    {
+      "type": "url",
+      "id": "link_url_3",
+      "label": "Link URL"
+    },
+    {
+      "type": "text",
+      "id": "customer_name_3",
+      "label": "Customer name"
+    },
+    {
+      "type": "textarea",
+      "id": "review_text_3",
+      "label": "Review text"
+    },
+    {
+      "type": "range",
+      "id": "rating_3",
+      "label": "Star rating",
+      "min": 0,
+      "max": 5,
+      "step": 1,
+      "default": 5
+    },
+    {
+      "type": "header",
+      "content": "Video 4"
+    },
+    {
+      "type": "text",
+      "id": "video_url_4",
+      "label": "Video URL",
+      "info": "Upload video to Settings > Files, then paste URL here"
+    },
+    {
+      "type": "url",
+      "id": "link_url_4",
+      "label": "Link URL"
+    },
+    {
+      "type": "text",
+      "id": "customer_name_4",
+      "label": "Customer name"
+    },
+    {
+      "type": "textarea",
+      "id": "review_text_4",
+      "label": "Review text"
+    },
+    {
+      "type": "range",
+      "id": "rating_4",
+      "label": "Star rating",
+      "min": 0,
+      "max": 5,
+      "step": 1,
+      "default": 5
+    },
+    {
+      "type": "header",
+      "content": "Video 5"
+    },
+    {
+      "type": "text",
+      "id": "video_url_5",
+      "label": "Video URL",
+      "info": "Upload video to Settings > Files, then paste URL here"
+    },
+    {
+      "type": "url",
+      "id": "link_url_5",
+      "label": "Link URL"
+    },
+    {
+      "type": "text",
+      "id": "customer_name_5",
+      "label": "Customer name"
+    },
+    {
+      "type": "textarea",
+      "id": "review_text_5",
+      "label": "Review text"
+    },
+    {
+      "type": "range",
+      "id": "rating_5",
+      "label": "Star rating",
+      "min": 0,
+      "max": 5,
+      "step": 1,
+      "default": 5
+    },
+    {
+      "type": "header",
+      "content": "Video 6"
+    },
+    {
+      "type": "text",
+      "id": "video_url_6",
+      "label": "Video URL",
+      "info": "Upload video to Settings > Files, then paste URL here"
+    },
+    {
+      "type": "url",
+      "id": "link_url_6",
+      "label": "Link URL"
+    },
+    {
+      "type": "text",
+      "id": "customer_name_6",
+      "label": "Customer name"
+    },
+    {
+      "type": "textarea",
+      "id": "review_text_6",
+      "label": "Review text"
+    },
+    {
+      "type": "range",
+      "id": "rating_6",
+      "label": "Star rating",
+      "min": 0,
+      "max": 5,
+      "step": 1,
+      "default": 5
+    },
+    {
+      "type": "header",
+      "content": "Video 7"
+    },
+    {
+      "type": "text",
+      "id": "video_url_7",
+      "label": "Video URL",
+      "info": "Upload video to Settings > Files, then paste URL here"
+    },
+    {
+      "type": "url",
+      "id": "link_url_7",
+      "label": "Link URL"
+    },
+    {
+      "type": "text",
+      "id": "customer_name_7",
+      "label": "Customer name"
+    },
+    {
+      "type": "textarea",
+      "id": "review_text_7",
+      "label": "Review text"
+    },
+    {
+      "type": "range",
+      "id": "rating_7",
+      "label": "Star rating",
+      "min": 0,
+      "max": 5,
+      "step": 1,
+      "default": 5
+    },
+    {
+      "type": "header",
+      "content": "Video 8"
+    },
+    {
+      "type": "text",
+      "id": "video_url_8",
+      "label": "Video URL",
+      "info": "Upload video to Settings > Files, then paste URL here"
+    },
+    {
+      "type": "url",
+      "id": "link_url_8",
+      "label": "Link URL"
+    },
+    {
+      "type": "text",
+      "id": "customer_name_8",
+      "label": "Customer name"
+    },
+    {
+      "type": "textarea",
+      "id": "review_text_8",
+      "label": "Review text"
+    },
+    {
+      "type": "range",
+      "id": "rating_8",
+      "label": "Star rating",
+      "min": 0,
+      "max": 5,
+      "step": 1,
+      "default": 5
+    },
+    {
+      "type": "header",
+      "content": "Video 9"
+    },
+    {
+      "type": "text",
+      "id": "video_url_9",
+      "label": "Video URL",
+      "info": "Upload video to Settings > Files, then paste URL here"
+    },
+    {
+      "type": "url",
+      "id": "link_url_9",
+      "label": "Link URL"
+    },
+    {
+      "type": "text",
+      "id": "customer_name_9",
+      "label": "Customer name"
+    },
+    {
+      "type": "textarea",
+      "id": "review_text_9",
+      "label": "Review text"
+    },
+    {
+      "type": "range",
+      "id": "rating_9",
+      "label": "Star rating",
+      "min": 0,
+      "max": 5,
+      "step": 1,
+      "default": 5
+    },
+    {
+      "type": "header",
+      "content": "Video 10"
+    },
+    {
+      "type": "text",
+      "id": "video_url_10",
+      "label": "Video URL",
+      "info": "Upload video to Settings > Files, then paste URL here"
+    },
+    {
+      "type": "url",
+      "id": "link_url_10",
+      "label": "Link URL"
+    },
+    {
+      "type": "text",
+      "id": "customer_name_10",
+      "label": "Customer name"
+    },
+    {
+      "type": "textarea",
+      "id": "review_text_10",
+      "label": "Review text"
+    },
+    {
+      "type": "range",
+      "id": "rating_10",
+      "label": "Star rating",
+      "min": 0,
+      "max": 5,
+      "step": 1,
+      "default": 5
+    },
+    {
+      "type": "header",
+      "content": "Video 11"
+    },
+    {
+      "type": "text",
+      "id": "video_url_11",
+      "label": "Video URL",
+      "info": "Upload video to Settings > Files, then paste URL here"
+    },
+    {
+      "type": "url",
+      "id": "link_url_11",
+      "label": "Link URL"
+    },
+    {
+      "type": "text",
+      "id": "customer_name_11",
+      "label": "Customer name"
+    },
+    {
+      "type": "textarea",
+      "id": "review_text_11",
+      "label": "Review text"
+    },
+    {
+      "type": "range",
+      "id": "rating_11",
+      "label": "Star rating",
+      "min": 0,
+      "max": 5,
+      "step": 1,
+      "default": 5
+    },
+    {
+      "type": "header",
+      "content": "Video 12"
+    },
+    {
+      "type": "text",
+      "id": "video_url_12",
+      "label": "Video URL",
+      "info": "Upload video to Settings > Files, then paste URL here"
+    },
+    {
+      "type": "url",
+      "id": "link_url_12",
+      "label": "Link URL"
+    },
+    {
+      "type": "text",
+      "id": "customer_name_12",
+      "label": "Customer name"
+    },
+    {
+      "type": "textarea",
+      "id": "review_text_12",
+      "label": "Review text"
+    },
+    {
+      "type": "range",
+      "id": "rating_12",
+      "label": "Star rating",
+      "min": 0,
+      "max": 5,
+      "step": 1,
+      "default": 5
+    },
+    {
+      "type": "header",
+      "content": "Video 13"
+    },
+    {
+      "type": "text",
+      "id": "video_url_13",
+      "label": "Video URL",
+      "info": "Upload video to Settings > Files, then paste URL here"
+    },
+    {
+      "type": "url",
+      "id": "link_url_13",
+      "label": "Link URL"
+    },
+    {
+      "type": "text",
+      "id": "customer_name_13",
+      "label": "Customer name"
+    },
+    {
+      "type": "textarea",
+      "id": "review_text_13",
+      "label": "Review text"
+    },
+    {
+      "type": "range",
+      "id": "rating_13",
+      "label": "Star rating",
+      "min": 0,
+      "max": 5,
+      "step": 1,
+      "default": 5
+    },
+    {
+      "type": "header",
+      "content": "Video 14"
+    },
+    {
+      "type": "text",
+      "id": "video_url_14",
+      "label": "Video URL",
+      "info": "Upload video to Settings > Files, then paste URL here"
+    },
+    {
+      "type": "url",
+      "id": "link_url_14",
+      "label": "Link URL"
+    },
+    {
+      "type": "text",
+      "id": "customer_name_14",
+      "label": "Customer name"
+    },
+    {
+      "type": "textarea",
+      "id": "review_text_14",
+      "label": "Review text"
+    },
+    {
+      "type": "range",
+      "id": "rating_14",
+      "label": "Star rating",
+      "min": 0,
+      "max": 5,
+      "step": 1,
+      "default": 5
+    },
+    {
+      "type": "header",
+      "content": "Video 15"
+    },
+    {
+      "type": "text",
+      "id": "video_url_15",
+      "label": "Video URL",
+      "info": "Upload video to Settings > Files, then paste URL here"
+    },
+    {
+      "type": "url",
+      "id": "link_url_15",
+      "label": "Link URL"
+    },
+    {
+      "type": "text",
+      "id": "customer_name_15",
+      "label": "Customer name"
+    },
+    {
+      "type": "textarea",
+      "id": "review_text_15",
+      "label": "Review text"
+    },
+    {
+      "type": "range",
+      "id": "rating_15",
+      "label": "Star rating",
+      "min": 0,
+      "max": 5,
+      "step": 1,
+      "default": 5
+    },
+    {
+      "type": "header",
+      "content": "Video 16"
+    },
+    {
+      "type": "text",
+      "id": "video_url_16",
+      "label": "Video URL",
+      "info": "Upload video to Settings > Files, then paste URL here"
+    },
+    {
+      "type": "url",
+      "id": "link_url_16",
+      "label": "Link URL"
+    },
+    {
+      "type": "text",
+      "id": "customer_name_16",
+      "label": "Customer name"
+    },
+    {
+      "type": "textarea",
+      "id": "review_text_16",
+      "label": "Review text"
+    },
+    {
+      "type": "range",
+      "id": "rating_16",
+      "label": "Star rating",
+      "min": 0,
+      "max": 5,
+      "step": 1,
+      "default": 5
+    },
+    {
+      "type": "header",
+      "content": "Video 17"
+    },
+    {
+      "type": "text",
+      "id": "video_url_17",
+      "label": "Video URL",
+      "info": "Upload video to Settings > Files, then paste URL here"
+    },
+    {
+      "type": "url",
+      "id": "link_url_17",
+      "label": "Link URL"
+    },
+    {
+      "type": "text",
+      "id": "customer_name_17",
+      "label": "Customer name"
+    },
+    {
+      "type": "textarea",
+      "id": "review_text_17",
+      "label": "Review text"
+    },
+    {
+      "type": "range",
+      "id": "rating_17",
+      "label": "Star rating",
+      "min": 0,
+      "max": 5,
+      "step": 1,
+      "default": 5
+    },
+    {
+      "type": "header",
+      "content": "Video 18"
+    },
+    {
+      "type": "text",
+      "id": "video_url_18",
+      "label": "Video URL",
+      "info": "Upload video to Settings > Files, then paste URL here"
+    },
+    {
+      "type": "url",
+      "id": "link_url_18",
+      "label": "Link URL"
+    },
+    {
+      "type": "text",
+      "id": "customer_name_18",
+      "label": "Customer name"
+    },
+    {
+      "type": "textarea",
+      "id": "review_text_18",
+      "label": "Review text"
+    },
+    {
+      "type": "range",
+      "id": "rating_18",
+      "label": "Star rating",
+      "min": 0,
+      "max": 5,
+      "step": 1,
+      "default": 5
+    },
+    {
+      "type": "header",
+      "content": "Video 19"
+    },
+    {
+      "type": "text",
+      "id": "video_url_19",
+      "label": "Video URL",
+      "info": "Upload video to Settings > Files, then paste URL here"
+    },
+    {
+      "type": "url",
+      "id": "link_url_19",
+      "label": "Link URL"
+    },
+    {
+      "type": "text",
+      "id": "customer_name_19",
+      "label": "Customer name"
+    },
+    {
+      "type": "textarea",
+      "id": "review_text_19",
+      "label": "Review text"
+    },
+    {
+      "type": "range",
+      "id": "rating_19",
+      "label": "Star rating",
+      "min": 0,
+      "max": 5,
+      "step": 1,
+      "default": 5
+    },
+    {
+      "type": "header",
+      "content": "Video 20"
+    },
+    {
+      "type": "text",
+      "id": "video_url_20",
+      "label": "Video URL",
+      "info": "Upload video to Settings > Files, then paste URL here"
+    },
+    {
+      "type": "url",
+      "id": "link_url_20",
+      "label": "Link URL"
+    },
+    {
+      "type": "text",
+      "id": "customer_name_20",
+      "label": "Customer name"
+    },
+    {
+      "type": "textarea",
+      "id": "review_text_20",
+      "label": "Review text"
+    },
+    {
+      "type": "range",
+      "id": "rating_20",
+      "label": "Star rating",
+      "min": 0,
+      "max": 5,
+      "step": 1,
+      "default": 5
+    },
+    {
+      "type": "header",
+      "content": "Style"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Background color",
+      "default": "#faf6f1"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Text color",
+      "default": "#2c1f14"
+    },
+    {
+      "type": "color",
+      "id": "card_background",
+      "label": "Card background",
+      "default": "#f5efe6"
+    },
+    {
+      "type": "color",
+      "id": "star_color",
+      "label": "Star color",
+      "default": "#c4a882"
+    },
+    {
+      "type": "color",
+      "id": "star_empty_color",
+      "label": "Empty star color",
+      "default": "#d4bba8"
+    },
+    {
+      "type": "range",
+      "id": "section_padding",
+      "label": "Section padding",
+      "min": 20,
+      "max": 100,
+      "step": 10,
+      "unit": "px",
+      "default": 60
+    },
+    {
+      "type": "range",
+      "id": "header_spacing",
+      "label": "Header spacing",
+      "min": 20,
+      "max": 80,
+      "step": 10,
+      "unit": "px",
+      "default": 40
+    },
+    {
+      "type": "range",
+      "id": "grid_gap",
+      "label": "Grid gap",
+      "min": 8,
+      "max": 40,
+      "step": 4,
+      "unit": "px",
+      "default": 16
+    },
+    {
+      "type": "range",
+      "id": "border_radius",
+      "label": "Border radius",
+      "min": 0,
+      "max": 24,
+      "step": 2,
+      "unit": "px",
+      "default": 8
+    },
+    {
+      "type": "header",
+      "content": "Typography"
+    },
+    {
+      "type": "font_picker",
+      "id": "heading_font",
+      "label": "Heading font",
+      "default": "tenor_sans_n4"
+    },
+    {
+      "type": "range",
+      "id": "heading_size",
+      "label": "Heading size",
+      "min": 20,
+      "max": 60,
+      "step": 2,
+      "unit": "px",
+      "default": 36
+    },
+    {
+      "type": "checkbox",
+      "id": "heading_uppercase",
+      "label": "Uppercase heading",
+      "default": true
+    },
+    {
+      "type": "font_picker",
+      "id": "body_font",
+      "label": "Body font",
+      "default": "twentieth_century_n4"
+    },
+    {
+      "type": "range",
+      "id": "body_size",
+      "label": "Body size",
+      "min": 12,
+      "max": 24,
+      "step": 1,
+      "unit": "px",
+      "default": 16
+    }
+  ],
+  "presets": [
+    {
+      "name": "Video review grid"
+    }
+  ]
+}
+{% endschema %}
